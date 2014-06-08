@@ -61,7 +61,7 @@ volatile long ALT_pos = altRES / 2;
 
 
 void setup() {
-  Serial.begin(115200);
+  Serial.begin(9600);
 
   // initialize the encoder inputs
   pinMode(ALT_enc_A, INPUT);
