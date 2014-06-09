@@ -1,8 +1,10 @@
 
 /* Matt Woodward, June 2013
  * Initialize WiFly for serial-over-wifi use for Astronomy DSC apps
+ * Feel free to modify and share for non-commerical use
  */
 
+//load in the encoder library /library/Encoder/
 #include <Arduino.h>
 #include <Streaming.h>
 #include <SoftwareSerial.h>
@@ -12,25 +14,16 @@ WiFlySerial WiFly(8, 9);
 int LED = 13;
 int inByte;
 
-#define IP_ADDRESS "10.0.0.1"
-#define PORT "4030"
-#define PAUSE "pause"
-#define PAUSE_DURATION 100
-#define LONG_PAUSE "longpause"
-#define LONG_PAUSE_DURATION 500
-#define SSID_KEY "SSID:"
-#define SSID "telescope"
-#define DONE "done"
-
 void execute_wifi_commands(char ** commands);
 void setup_wifi();
 
 void setup() 
 { 
-  setup_wifi();
-
+  Serial.begin(9600);
   // setup for builtin LED
   pinMode (13, OUTPUT);
+  
+  setup_wifi();
 } 
 
 void loop() { 
@@ -42,14 +35,19 @@ void loop() {
 
 void setup_wifi()
 {
+  // for firmware 4.41
   char * commands[] = 
     {
+      LONG_PAUSE,
       "factory RESET",
       LONG_PAUSE,
       "set uart mode 0x03",
-      "set uart baudrate 115200",
+      "set uart baudrate 9600",
       "set wlan join 7",
+      "set wlan rate 0",
       SSID_KEY SSID,
+      "set ap passphrase manorastroman",
+      "set ap link_monitor 0",
       "set dhcp lease 2000",
       "set ip address " IP_ADDRESS,
       "set ip gateway " IP_ADDRESS,
@@ -96,20 +94,24 @@ void execute_wifi_commands(char * commands[])
         if(*bufRequest)
         {
           char ssid_command[100];
-          sprintf(ssid_command, "set wlan ssid %s-%s", command + strlen(SSID_KEY), bufRequest + strlen(bufRequest)-2);
-      	  WiFly.SendCommandSimple(ssid_command, "AOK");
+          sprintf(ssid_command, "set ap ssid %s-%s", command + strlen(SSID_KEY), bufRequest + strlen(bufRequest)-2);
+          Serial.println(ssid_command);
+          WiFly.SendCommandSimple(ssid_command, "AOK");
         }
       }
-      if(0 == strcmp(command, LONG_PAUSE))
+      else if(0 == strcmp(command, LONG_PAUSE))
 	{
 	  delay(LONG_PAUSE_DURATION);
+          Serial.println("long pause");
 	}
       else if(0 == strcmp(command, PAUSE))
 	{
 	  delay(PAUSE_DURATION);
+          Serial.println("pause");
 	}
       else
 	{
+          Serial.println(command);
 	  WiFly.SendCommandSimple(command, "AOK");
         }
       command = commands[cmd++];
